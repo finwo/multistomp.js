@@ -5,6 +5,7 @@ import {
   ActivationState,
   StompSubscription,
   StompHeaders,
+  IPublishParams,
 } from '@stomp/stompjs';
 
 // Intentionally sparse, will copy features as needed
@@ -28,6 +29,7 @@ export class Client {
   _client: StompClient | null;
   _state : string | null;
   _reconnectDelay: number;
+  _publishQueue: IPublishParams[];
 
   get state(): string {
     return this._state || (this.active ? 'ACTIVE' : 'INACTIVE');
@@ -35,6 +37,8 @@ export class Client {
 
   constructor(options: Options) {
     if (!options.brokerURL) throw new Error("Missing brokerURL");
+
+    this._publishQueue = [];
 
     const opts = Object.assign({
       reconnectDelay   : 5000,
@@ -115,11 +119,16 @@ export class Client {
           onWebSocketError: () => { clearInterval(runner); this._failover(this._reconnectDelay); },
           onWebSocketClose: () => { clearInterval(runner); this._failover(this._reconnectDelay); },
           onDisconnect    : () => { clearInterval(runner); this._failover(this._reconnectDelay); },
+          onConnect       : () => {
+            for(const sub of this.subs) {
+              if (sub._) sub._.unsubscribe();
+              sub._ = this._client.subscribe(sub.queue, sub.fn, sub.headers);
+            }
+            while(this._publishQueue.length) {
+              this._client.publish(this._publishQueue.shift());
+            }
+          },
         });
-        for(const sub of this.subs) {
-          if (sub._) sub._.unsubscribe();
-          sub._ = this._client.subscribe(sub.queue, sub.fn, sub.headers);
-        }
       }
     }, 1000);
   }
@@ -135,7 +144,7 @@ export class Client {
     const sub = {
       queue,
       fn,
-      _: this._client.subscribe(queue, fn, headers),
+      _: this._client ? this._client.subscribe(queue, fn, headers) : null,
       unsubscribe: () => {
         if (sub._) sub._.unsubscribe();
         this.subs = this.subs.filter(s => s !== s);
@@ -148,6 +157,14 @@ export class Client {
 
   unsubscribe(...args) {
     throw new Error("Unsubscribe must be called directly on the subscription");
+  }
+
+  publish(params: IPublishParams): void {
+    if (!(this._client && this._client.state == ActivationState.ACTIVE)) {
+      this._publishQueue.push(params);
+      return;
+    }
+    return this._client.publish(params);
   }
 
 }
