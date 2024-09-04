@@ -4,6 +4,7 @@ import {
   messageCallbackType,
   ActivationState,
   StompSubscription,
+  StompHeaders,
 } from '@stomp/stompjs';
 
 // Intentionally sparse, will copy features as needed
@@ -16,6 +17,7 @@ export type Subscription = {
   fn          : messageCallbackType;
   _           : StompSubscription | null;
   unsubscribe : ()=>void;
+  headers    ?: StompHeaders;
 };
 
 export class Client {
@@ -116,7 +118,7 @@ export class Client {
         });
         for(const sub of this.subs) {
           if (sub._) sub._.unsubscribe();
-          sub._ = this._client.subscribe(sub.queue, sub.fn);
+          sub._ = this._client.subscribe(sub.queue, sub.fn, sub.headers);
         }
       }
     }, 1000);
@@ -129,15 +131,16 @@ export class Client {
     this._client = null;
   }
 
-  subscribe(queue: string, fn: messageCallbackType): Subscription {
+  subscribe(queue: string, fn: messageCallbackType, headers?: StompHeaders): Subscription {
     const sub = {
       queue,
       fn,
-      _: this._client.subscribe(queue, fn),
+      _: this._client.subscribe(queue, fn, headers),
       unsubscribe: () => {
         if (sub._) sub._.unsubscribe();
         this.subs = this.subs.filter(s => s !== s);
-      }
+      },
+      headers,
     };
     this.subs.push(sub);
     return sub;

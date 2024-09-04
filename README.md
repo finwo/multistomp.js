@@ -18,6 +18,7 @@ const client = new Client({
     ],
 });
 
+client.activate();
 
 const subscription = client.subscribe("/my/queue/name", (message) => {
     // Do things
@@ -26,4 +27,8 @@ const subscription = client.subscribe("/my/queue/name", (message) => {
 setTimeout(() => {
     subscription.unsubscribe();
 }, 5000);
+
+setTimeout(() => {
+    client.deactivate();
+}, 15000);
 ```
