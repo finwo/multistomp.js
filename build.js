@@ -17,13 +17,13 @@ const { dtsPlugin } = require('esbuild-plugin-d.ts');
   const options = {
     bundle: false,
     outdir,
-    target: 'node18',
+    target: 'es2018',
     platform: 'node',
     format: 'cjs',
     sourcemap: tsconfig.compilerOptions.sourceMap,
     tsconfig: path.join(__dirname, 'tsconfig.json'),
     entryPoints,
-    plugins: [dtsPlugin()],
+    plugins: [dtsPlugin({tsconfig})],
   };
 
   console.log('Building');
