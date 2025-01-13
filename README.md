@@ -27,12 +27,12 @@ const client = new Client({
 });
 
 // Even pre-activated publishes are supported (queued until connected)
-client.publish("hello world");
+client.publish({ destination: "/my/queue/name", body: "hello world" });
 
 client.activate();
 
 // Regular publish
-client.publish("foobar");
+client.publish({ destination: "/my/queue/name", body: "foobar" });
 
 const subscription = client.subscribe("/my/queue/name", (message) => {
     // Do things
