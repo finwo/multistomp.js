@@ -9,6 +9,7 @@ npm install --save multistomp
 Usage:
 
 ```ts
+import { IMessage } from '@stomp/stompjs';
 import { Client } from 'multistomp';
 
 const client = new Client({
@@ -34,9 +35,21 @@ client.activate();
 // Regular publish
 client.publish({ destination: "/my/queue/name", body: "foobar" });
 
-const subscription = client.subscribe("/my/queue/name", (message) => {
+const subscription = client.subscribe("/my/queue/name", (message: IMessage) => {
     // Do things
 });
+
+// Or, a subscription with custom headers:
+const subscription = client.subscribe("/my/queue/name", (message: IMessage) => {
+    try {
+        // Do something
+        message.ack();
+    } catch {
+        // We failed
+        message.nack();
+    }
+}, { ack: 'client-individual', 'activemq.prefetchSize': '4' });
+
 
 setTimeout(() => {
     subscription.unsubscribe();
