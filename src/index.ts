@@ -65,9 +65,6 @@ export class Client {
       this.urls.push(urlEntry);
     }
 
-    if ('string' === typeof opts.brokerURL) opts.brokerURL = [opts.brokerURL];
-    if (!Array.isArray(opts.brokerURL)) throw new Error("Invalid brokerURL");
-
     this.subs            = [];
     this.active          = false;
     this._client         = null;
