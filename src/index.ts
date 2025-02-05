@@ -55,7 +55,7 @@ export class Client {
         urlQueue.push(...urlEntry);
         continue;
       }
-      if ('string' !== urlEntry) {
+      if ('string' !== typeof urlEntry) {
         throw new Error("Invalid brokerURL");
       }
       if ((urlEntry.slice(0,10) === "failover:(") && (urlEntry.slice(-1) === ")")) {
