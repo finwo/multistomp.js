@@ -72,7 +72,6 @@ export class Client {
     this.opts            = opts;
 
     delete opts.brokerURL;
-    delete opts.reconnectDelay;
   }
 
   ack(...args) {
@@ -116,7 +115,6 @@ export class Client {
           brokerURL       : this.urls[0],
           onStompError    : () => { clearInterval(runner); this._failover(this._reconnectDelay); },
           onWebSocketError: () => { clearInterval(runner); this._failover(this._reconnectDelay); },
-          onWebSocketClose: () => { clearInterval(runner); this._failover(this._reconnectDelay); },
           onDisconnect    : () => { clearInterval(runner); this._failover(this._reconnectDelay); },
           onConnect       : () => {
             for(const sub of this.subs) {
