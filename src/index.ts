@@ -84,6 +84,7 @@ export class Client {
   }
 
   protected _failover(delay?: number) {
+    if (this._state == 'RECONNECTING') return; // Prevent double failover
     // Enter pseudo-active state
     this.deactivate();
     this.active = true;
@@ -126,11 +127,13 @@ export class Client {
             }
           },
         });
+        this._client.activate();
       }
     }, 1000);
   }
 
   deactivate() {
+    if (!this.active) return;
     this._state = null;
     this.active = false;
     this._client.deactivate();
