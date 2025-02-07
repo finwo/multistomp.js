@@ -84,6 +84,7 @@ export class Client {
   }
 
   protected _failover(delay?: number) {
+    if (!this.active) return; // No failover if not activated
     if (this._state == 'RECONNECTING') return; // Prevent double failover
     // Enter pseudo-active state
     this.deactivate();
