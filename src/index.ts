@@ -100,7 +100,6 @@ export class Client {
 
   activate() {
     if (this.active) return;
-
     this._state = null;
     this.active = true;
     const runner = setInterval(() => {
@@ -108,14 +107,21 @@ export class Client {
         this._state = null;
         return clearInterval(runner);
       }
+      const failoverWithCallback = (name: string) => (...args: any[]) => {
+        clearInterval(runner);
+        this._failover(this._reconnectDelay);
+        if ('function' === typeof this.opts[name]) {
+          this.opts[name](...args);
+        }
+      };
       if (!this.urls.length) return;
       if (!this._client) {
         this._client = new StompClient({
           ...(this.opts),
           brokerURL       : this.urls[0],
-          onStompError    : () => { clearInterval(runner); this._failover(this._reconnectDelay); },
-          onWebSocketError: () => { clearInterval(runner); this._failover(this._reconnectDelay); },
-          onDisconnect    : () => { clearInterval(runner); this._failover(this._reconnectDelay); },
+          onStompError    : failoverWithCallback('onStompError'),
+          onWebSocketError: failoverWithCallback('onWebSocketError'),
+          onDisconnect    : failoverWithCallback('onDisconnect'),
           onConnect       : () => {
             for(const sub of this.subs) {
               if (sub._) sub._.unsubscribe();
